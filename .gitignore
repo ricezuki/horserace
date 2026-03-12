@@ -1,12 +1,62 @@
+# Python cache
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+
+# Virtual environments
 .venv/
 venv/
 env/
+
+# Environment / secrets
+.env
+.env.*
+*.secret
+*.key
+
+# Logs
 *.log
+logs/
+log/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / Editor
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
 
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local data outputs
 data/
+output/
+outputs/
+tmp/
+temp/
+
+# Downloaded browser / automation cache
+playwright-report/
+test-results/
+
+# Large or generated data files
+*.csv
+*.tsv
+*.jsonl
+*.parquet
+
+# Keep sample data if needed
+!data/.gitkeep
+!data/sample/
+!data/sample/**
