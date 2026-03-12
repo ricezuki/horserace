@@ -39,24 +39,37 @@ build/
 dist/
 *.egg-info/
 
-# Local data outputs
+# Local outputs
 data/
 output/
 outputs/
 tmp/
 temp/
 
-# Downloaded browser / automation cache
+# Browser automation artifacts
 playwright-report/
 test-results/
 
-# Large or generated data files
+# Large generated data
 *.csv
 *.tsv
 *.jsonl
 *.parquet
+*.pkl
+*.joblib
 
-# Keep sample data if needed
+# Optional: exclude generated model files
+models/**/*.pkl
+models/**/*.joblib
+models/**/*.bin
+
+# Optional: exclude raw saved html if they are generated artifacts
+html/**/*.html
+
+# Keep placeholders or samples if needed
 !data/.gitkeep
 !data/sample/
 !data/sample/**
+!features/.gitkeep
+!models/.gitkeep
+!html/.gitkeep
