@@ -1,0 +1,38 @@
+{
+  "rows_merged": 3532,
+  "race_count": 248,
+  "date_min": "2026-01-04",
+  "date_max": "2026-01-31",
+  "best_win_rule": {
+    "bet_type": "win",
+    "ev_threshold": 1.5,
+    "min_prob": 0.0,
+    "max_bets_per_race": 0,
+    "bets": 26,
+    "race_count": 26,
+    "hits": 26,
+    "hit_rate": 1.0,
+    "stake_yen": 2600,
+    "return_yen": 109970.0,
+    "profit_yen": 107370.0,
+    "roi": 42.29615384615385,
+    "avg_ev": 2.578474495666592,
+    "avg_prob": 0.1256377752201361
+  },
+  "best_place_rule": {
+    "bet_type": "place",
+    "ev_threshold": 1.2,
+    "min_prob": 0.0,
+    "max_bets_per_race": 0,
+    "bets": 89,
+    "race_count": 69,
+    "hits": 89,
+    "hit_rate": 1.0,
+    "stake_yen": 8900,
+    "return_yen": 100490.0,
+    "profit_yen": 91590.0,
+    "roi": 11.291011235955056,
+    "avg_ev": 1.8182703775616356,
+    "avg_prob": 0.2854718737377064
+  }
+}

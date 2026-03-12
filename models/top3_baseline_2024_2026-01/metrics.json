@@ -1,0 +1,11 @@
+{
+  "rows": 3532,
+  "positive_rate": 0.2109286523216308,
+  "log_loss": 0.41952913840737827,
+  "roc_auc": 0.7951057522582075,
+  "pr_auc": 0.512336701678813,
+  "top_quantile_precision_proxy_k1": 1.0,
+  "top_quantile_precision_proxy_k2": 1.0,
+  "top_quantile_precision_proxy_k3": 1.0,
+  "top_quantile_precision_proxy_k5": 1.0
+}

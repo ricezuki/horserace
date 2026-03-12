@@ -1,0 +1,9 @@
+{
+  "target": "is_top3",
+  "split_date": "2025-12-31",
+  "train_rows": 87051,
+  "valid_rows": 3532,
+  "feature_count": 61,
+  "feature_columns_path": "feature_columns.json",
+  "model_path": "top3_model.joblib"
+}

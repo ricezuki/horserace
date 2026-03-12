@@ -1,0 +1,17 @@
+{
+  "rows": 3532,
+  "positive_rate": 0.07021517553793885,
+  "log_loss": 0.21761313923672745,
+  "roc_auc": 0.7906749734784488,
+  "pr_auc": 0.2326307916266993,
+  "race_count": 248,
+  "top1_win_hit_rate": 0.2903225806451613,
+  "top1_win_precision": 0.2903225806451613,
+  "top1_win_recall": 0.2903225806451613,
+  "top3_win_hit_rate": 0.592741935483871,
+  "top3_win_precision": 0.1975806451612903,
+  "top3_win_recall": 0.592741935483871,
+  "top5_win_hit_rate": 0.7903225806451613,
+  "top5_win_precision": 0.15806451612903227,
+  "top5_win_recall": 0.7903225806451613
+}
