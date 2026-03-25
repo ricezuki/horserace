@@ -153,6 +153,100 @@ def infer_bet_label(odds_type: str) -> str:
         "b8": "3連単",
     }[odds_type]
 
+
+async def wait_for_page_ready(page, odds_type: str, timeout_ms: int) -> None:
+    if odds_type == "b1":
+        await page.wait_for_selector("#odds_tan_block table tbody tr", timeout=timeout_ms)
+        await page.wait_for_selector("#odds_fuku_block table tbody tr", timeout=timeout_ms)
+    else:
+        odds_type_num = int(odds_type[1:])
+        await page.wait_for_selector(f"[id^='odds-{odds_type_num}-']", timeout=timeout_ms)
+
+
+async def parse_b1_page(page, race_id: str, timeout_ms: int) -> List[Dict]:
+    await wait_for_page_ready(page, "b1", timeout_ms)
+    meta = extract_race_meta_from_title(await page.title(), race_id)
+
+    js = """
+    () => {
+      function txt(el) {
+        return (el?.innerText || el?.textContent || '').replace(/\\s+/g, ' ').trim();
+      }
+
+      function parseTableRows(rootSelector, betType) {
+        const out = [];
+        const rows = document.querySelectorAll(rootSelector + ' table tbody tr');
+
+        rows.forEach(tr => {
+          const cells = Array.from(tr.querySelectorAll('th, td'));
+          if (cells.length < 2) return;
+
+          const horseNoText = txt(cells[1]);
+          if (!/^\\d{1,2}$/.test(horseNoText)) return;
+          const horseNo = parseInt(horseNoText, 10);
+
+          const horseName = txt(tr.querySelector('a'));
+          const rowText = txt(tr).replace(/,/g, '');
+
+          let odds = null;
+          let oddsMax = null;
+          let popularity = null;
+
+          const mp = rowText.match(/(\\d+)人気/);
+          if (mp) popularity = parseInt(mp[1], 10);
+
+          if (betType === '複勝') {
+            const mRange = rowText.match(/(\\d+(?:\\.\\d+)?)\\s*[-〜~]\\s*(\\d+(?:\\.\\d+)?)(?!.*\\d)/);
+            if (mRange) {
+              odds = parseFloat(mRange[1]);
+              oddsMax = parseFloat(mRange[2]);
+            } else {
+              const nums = Array.from(rowText.matchAll(/\\d+(?:\\.\\d+)?/g)).map(m => m[0]);
+              if (nums.length > 0) odds = parseFloat(nums[nums.length - 1]);
+            }
+          } else {
+            const nums = Array.from(rowText.matchAll(/\\d+(?:\\.\\d+)?/g)).map(m => m[0]);
+            if (nums.length > 0) odds = parseFloat(nums[nums.length - 1]);
+          }
+
+          out.push({
+            bet_type: betType,
+            combination: String(horseNo),
+            horse_number_1: horseNo,
+            horse_number_2: null,
+            horse_number_3: null,
+            horse_name_1: horseName,
+            horse_name_2: '',
+            horse_name_3: '',
+            odds: odds,
+            odds_max: oddsMax,
+            popularity: popularity
+          });
+        });
+
+        return out;
+      }
+
+      return [
+        ...parseTableRows('#odds_tan_block', '単勝'),
+        ...parseTableRows('#odds_fuku_block', '複勝')
+      ];
+    }
+    """
+
+    parsed = await page.evaluate(js)
+    rows = [{**meta, "odds_type": "b1", **row} for row in parsed]
+
+    if rows:
+        df = pd.DataFrame(rows).drop_duplicates(
+            subset=["race_id", "bet_type", "horse_number_1"],
+            keep="first",
+        )
+        return df.to_dict("records")
+
+    return rows
+
+
 async def extract_combo_rows_current_view(page, race_id: str, odds_type: str) -> List[Dict]:
     meta = extract_race_meta_from_title(await page.title(), race_id)
     odds_type_num = int(odds_type[1:])
@@ -200,107 +294,6 @@ async def extract_combo_rows_current_view(page, race_id: str, odds_type: str) ->
             "odds_max": None,
             "popularity": parse_popularity(item.get("td_text", "")),
         })
-
-    return rows
-
-async def wait_for_page_ready(page, odds_type: str, timeout_ms: int) -> None:
-    if odds_type == "b1":
-        await page.wait_for_selector("#odds_tan_block table tbody tr", timeout=timeout_ms)
-        await page.wait_for_selector("#odds_fuku_block table tbody tr", timeout=timeout_ms)
-    else:
-        odds_type_num = int(odds_type[1:])
-        await page.wait_for_selector(f"[id^='odds-{odds_type_num}-']", timeout=timeout_ms)
-
-
-async def parse_b1_page(page, race_id: str, timeout_ms: int) -> List[Dict]:
-    await wait_for_page_ready(page, "b1", timeout_ms)
-    meta = extract_race_meta_from_title(await page.title(), race_id)
-
-    js = """
-    () => {
-      function txt(el) {
-        return (el?.innerText || el?.textContent || '').replace(/\\s+/g, ' ').trim();
-      }
-
-      function parseTableRows(rootSelector, betType) {
-        const out = [];
-        const rows = document.querySelectorAll(rootSelector + ' table tbody tr');
-
-        rows.forEach(tr => {
-          const cells = Array.from(tr.querySelectorAll('th, td'));
-          if (cells.length < 2) return;
-
-          // 2列目を馬番として使う
-          const horseNoText = txt(cells[1]);
-          if (!/^\\d{1,2}$/.test(horseNoText)) return;
-          const horseNo = parseInt(horseNoText, 10);
-
-          const horseName = txt(tr.querySelector('a'));
-          const rowText = txt(tr).replace(/,/g, '');
-
-          let odds = null;
-          let oddsMax = null;
-          let popularity = null;
-
-          // 人気
-          const mp = rowText.match(/(\\d+)人気/);
-          if (mp) popularity = parseInt(mp[1], 10);
-
-          if (betType === '複勝') {
-            // 行末側のレンジを優先
-            const mRange = rowText.match(/(\\d+(?:\\.\\d+)?)\\s*[-〜~]\\s*(\\d+(?:\\.\\d+)?)(?!.*\\d)/);
-            if (mRange) {
-              odds = parseFloat(mRange[1]);
-              oddsMax = parseFloat(mRange[2]);
-            } else {
-              // 末尾側の単独数値
-              const nums = Array.from(rowText.matchAll(/\\d+(?:\\.\\d+)?/g)).map(m => m[0]);
-              if (nums.length > 0) {
-                odds = parseFloat(nums[nums.length - 1]);
-              }
-            }
-          } else {
-            // 単勝は末尾側の単独オッズを取る
-            const nums = Array.from(rowText.matchAll(/\\d+(?:\\.\\d+)?/g)).map(m => m[0]);
-            if (nums.length > 0) {
-              odds = parseFloat(nums[nums.length - 1]);
-            }
-          }
-
-          out.push({
-            bet_type: betType,
-            combination: String(horseNo),
-            horse_number_1: horseNo,
-            horse_number_2: null,
-            horse_number_3: null,
-            horse_name_1: horseName,
-            horse_name_2: '',
-            horse_name_3: '',
-            odds: odds,
-            odds_max: oddsMax,
-            popularity: popularity
-          });
-        });
-
-        return out;
-      }
-
-      return [
-        ...parseTableRows('#odds_tan_block', '単勝'),
-        ...parseTableRows('#odds_fuku_block', '複勝')
-      ];
-    }
-    """
-
-    parsed = await page.evaluate(js)
-    rows = [{**meta, "odds_type": "b1", **row} for row in parsed]
-
-    if rows:
-        df = pd.DataFrame(rows).drop_duplicates(
-            subset=["race_id", "bet_type", "horse_number_1"],
-            keep="first",
-        )
-        return df.to_dict("records")
 
     return rows
 
